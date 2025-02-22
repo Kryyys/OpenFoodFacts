@@ -1,53 +1,33 @@
 package org.example;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.spark.sql.*;
-import java.text.Normalizer;
 import java.util.Arrays;
 
 public class Main {
+    private static Dataset<Row> df;
     public static void main(String[] args) {
-        // Initialisation de Spark
+        String filePath = "resources/en.openfoodfacts.org.products.csv";
+
+        /* Initialise la session Spark */
         SparkSession spark = SparkSession.builder()
-                .appName("OpenFoodFactsIntegration")
-                .config("spark.master", "local")
+                .appName("OpenFoodFact")
+                .master("local") // Exécute Spark en mode local
                 .getOrCreate();
 
         // Chargement du fichier CSV
-        Dataset<Row> df = spark.read()
+        df = spark.read()
+                .format("csv")
                 .option("header", "true")
                 .option("inferSchema", "true")
-                .csv("resources/en.openfoodfacts.org.products.csv");
+                .option("delimiter", "\t")
+                .load(filePath); // Utilisation de la variable
 
-        // Affichage des colonnes brutes
+        // Affichage des colonnes brutes (pour essayer de résoudre le pb des colonnes)
         System.out.println("Colonnes brutes du DataFrame : " + Arrays.toString(df.columns()));
         df.printSchema();
-
-        // Nettoyage des noms de colonnes (suppression des espaces et caractères spéciaux)
-        String[] cleanedColumnNames = Arrays.stream(df.columns())
-                .map(c -> Normalizer.normalize(c.trim(), Normalizer.Form.NFKC)) // Normalisation Unicode
-                .map(c -> c.replaceAll("[^a-zA-Z0-9_]", "")) // Suppression des caractères spéciaux
-                .toArray(String[]::new);
-        df = df.toDF(cleanedColumnNames);
-
-        // Affichage des colonnes après nettoyage
-        System.out.println("Colonnes après nettoyage : ");
-        for (String col : df.columns()) {
-            System.out.println("'" + col + "'");
-        }
-
-        // Vérification du vrai nom de "product_name"
-        for (String col : df.columns()) {
-            if (col.toLowerCase().contains("product")) {
-                System.out.println("🔍 Possible nom de 'product_name' trouvé : '" + col + "'");
-            }
-        }
-
-        // Vérification de la présence de "product_name"
-        if (!Arrays.asList(df.columns()).contains("product_name")) {
-            System.err.println("⚠️ Erreur : 'product_name' n'est pas trouvée dans le DataFrame !");
-            spark.stop();
-            return;
-        }
+        df.show();
 
         // Nettoyage
         df = DataCleaner.cleanData(df);
