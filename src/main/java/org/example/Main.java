@@ -9,6 +9,8 @@ public class Main {
     private static Dataset<Row> df;
     public static void main(String[] args) {
         String filePath = "resources/en.openfoodfacts.org.products.csv";
+        System.setProperty("hadoop.home.dir", "C:\\Users\\marii\\AppData\\Local\\Programs\\hadoop-3.0.0");
+        System.setProperty("hadoop.native.lib", "false");
 
         /* Initialise la session Spark */
         SparkSession spark = SparkSession.builder()

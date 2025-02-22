@@ -6,6 +6,10 @@ import org.apache.spark.sql.functions;
 
 public class DataAggregator {
     public static Dataset<Row> getTopBrands(Dataset<Row> df) {
+        // Affichage de la rentrée dans le AGGREGATOR
+        System.out.println("AGGREGATOR");
+        df.printSchema();
+
         return df.groupBy("brands").count()
                 .orderBy(functions.desc("count"))
                 .limit(10);
